@@ -1,0 +1,154 @@
+include:
+  - project: 'devops/common-ci-lib'
+    ref: 'v0.3.1'
+    file: '/kaniko/build.yml'
+  - project: 'devops/common-ci-lib'
+    ref: 'v0.3.1'
+    file: '/crane/retag.yml'
+  # https://gitlab.dyninno.net/devops/common-ci-lib/-/tree/v0.1.9/argo
+  # argo-watcher will update the image for stage deployment.
+  - project: 'devops/common-ci-lib'
+    ref: 'v0.3.1'
+    file: '/argo/watcher.yml'
+
+stages:
+  - code_quality
+  - review
+  - package
+  - deploy
+
+before_script:
+  - hostname
+
+default:
+  tags:
+    - travel-stage-runner
+
+.kaniko_args: &kaniko_args
+  KANIKO_ARGS: |
+      --build-arg PIPELINE_TOKEN=$CI_JOB_TOKEN 
+      --build-arg CI_PROJECT_ID=$CI_PROJECT_ID 
+      --build-arg CI_PROJECT_PATH=$CI_PROJECT_PATH 
+      --build-arg CI_PROJECT_NAME=$CI_PROJECT_NAME 
+      --build-arg CI_PROJECT_NAMESPACE=$CI_PROJECT_NAMESPACE 
+      --build-arg CI_COMMIT_REF_SLUG=$CI_COMMIT_REF_SLUG 
+      --build-arg CI_COMMIT_REF_NAME=$CI_COMMIT_REF_NAME 
+      --build-arg CI_SERVER_HOST=$CI_SERVER_HOST
+
+
+############################
+
+lint:
+  image: registry.dyninno.net/dynatech/alpine-image/golang-1.21-runner-travel
+  stage: code_quality
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      allow_failure: true
+  before_script:
+    - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.dyninno.net".insteadOf "https://gitlab.dyninno.net"
+    - go env -w GOPRIVATE=gitlab.dyninno.net
+    - cp .docker/dev/.env .env
+    - make deps-lint
+  script:
+    - make lint
+
+unit_tests:
+  image: registry.dyninno.net/dynatech/alpine-image/golang-1.21-runner-travel
+  stage: code_quality
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      allow_failure: true
+  variables:
+    COVERAGE_EXCLUDE: 'config\|gen.go'
+    COVERAGE_PATHS: './internal/...'
+    RUN_COUNT: 5
+  before_script:
+    - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.dyninno.net".insteadOf "https://gitlab.dyninno.net"
+    - go env -w GOPRIVATE=gitlab.dyninno.net
+    - cp .docker/dev/.env .env
+  script:
+    - make test
+  coverage: '/total:\s+\(statements\)\s+(\d+.\d+\%)/'
+
+### Review ###
+build_review:
+  extends: .kaniko-build-branch
+  stage: review
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  environment:
+    name: review
+  before_script: []
+  variables:
+    <<: *kaniko_args
+    DOCKERFILE: '.docker/review/Dockerfile'
+    IMAGE_TAG: $CI_PIPELINE_ID
+    IMAGE_TAG_POSTFIX: '-review'
+
+## Stage deployement ##
+build_stage:
+  stage: package
+  extends: .kaniko-build-branch
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "stage"'
+  tags:
+    - travel-runner-kaniko
+  variables:
+    <<: *kaniko_args
+    DOCKERFILE: '.docker/stage/Dockerfile'
+    IMAGE_TAG: $CI_PIPELINE_ID
+    IMAGE_TAG_POSTFIX: '-stage'
+
+deploy-stage:
+  extends: .await-deployment
+  stage: deploy
+  tags:
+    - travel-runner-kaniko
+  dependencies:
+    - build_stage
+  needs:
+    - build_stage
+  rules:
+    - if: $CI_COMMIT_BRANCH == "stage"
+      when: manual
+  variables:
+    ARGO_WATCHER_URL: https://argo-watcher.stage-travel.com
+    PROJECT_NAME: https://lbc-api.stage-travel.com
+    ARGO_APP: lbc-service
+    DEBUG: 1
+    IMAGE_TAG: "${CI_PIPELINE_ID}-stage"
+    ARGO_WATCHER_DEPLOY_TOKEN: '$ARGO_WATCHER_DEPLOY_TOKEN_STAGE'
+
+## Prod deployement ##
+build_prod:
+  stage: package
+  extends: .kaniko-build-branch
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  tags:
+    - travel-runner-kaniko
+  variables:
+    <<: *kaniko_args
+    DOCKERFILE: '.docker/prod/Dockerfile'
+    IMAGE_TAG: $CI_PIPELINE_ID
+    IMAGE_TAG_POSTFIX: '-prod'
+
+deploy-prod:
+  extends: .await-deployment
+  stage: deploy
+  tags:
+    - travel-runner-kaniko
+  dependencies:
+    - build_prod
+  needs:
+    - build_prod
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+  variables:
+    ARGO_WATCHER_URL: https://argo-watcher.asaptickets.com
+    PROJECT_NAME: https://lbc-api.asaptickets.com
+    ARGO_APP: lbc-service-4509
+    DEBUG: 1
+    IMAGE_TAG: "${CI_PIPELINE_ID}-prod"
+    ARGO_WATCHER_DEPLOY_TOKEN: '$ARGO_WATCHER_DEPLOY_TOKEN_PROD'

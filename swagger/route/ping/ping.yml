@@ -1,0 +1,40 @@
+get:
+  summary: Ping
+  description: Pong
+  responses:
+    '200':
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PongResponse'
+    '400':
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: [ string ]
+            data: []
+
+# below code is just for current file reference
+components:
+  schemas:
+    PongResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+        data:
+          $ref: '#/components/schemas/PongData'
+
+    PongData:
+      $ref: '../../response/ping/ping-data.yml'
+
+    ErrorResponse:
+      $ref: '../../response/error.yml'
+

@@ -1,0 +1,31 @@
+openapi: 3.0.3
+info:
+  title: Lost of baggage claim service
+  description: |-
+    API gateway for Lost of claim lbc service
+  version: 1.0.0
+
+servers:
+  - url: /api
+
+paths:
+  /ping:
+    $ref: './route/ping/ping.yml'
+
+components:
+  schemas:
+    PongResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+        data:
+          $ref: '#/components/schemas/PongData'
+
+    PongData:
+      $ref: './response/ping/ping-data.yml'
+
+    ErrorResponse:
+      $ref: './response/error.yml'

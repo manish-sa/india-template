@@ -1,0 +1,90 @@
+version: '3.7'
+
+services:
+  india-template-backend:
+    image: dynatech/india-template-backend
+    container_name: ${CONTAINER_NAME}
+    environment:
+      VIRTUAL_HOST: india-template-api.dev-travel.com
+      VIRTUAL_PORT: ${PORT_HTTP}
+    build:
+      context: .
+      target: development
+      args:
+        - GITLAB_TOKEN=${GITLAB_TOKEN}
+      dockerfile: .docker/dev/Dockerfile
+    volumes:
+      - .:/home/app:rw
+    ports:
+      - ${PORT_HTTP}
+      - ${PORT_GRPC}
+    command: api
+    env_file:
+      - .env
+    depends_on:
+      - india-template-redis
+      - india-template-db
+
+  india-template-redis:
+    container_name: india-template-redis
+    image: redis:5
+    ports:
+      - ${REDIS_PORT}
+
+  india-template-redis-app:
+    container_name: india-template-redis-app
+    image: ghcr.io/joeferner/redis-commander:latest
+    depends_on:
+      - india-template-redis
+    environment:
+      REDIS_HOSTS: 'local:india-template-redis:${REDIS_PORT}'
+      VIRTUAL_HOST: india-template-redis.dev-travel.com
+      VIRTUAL_PORT: 8081
+    ports:
+      - 8081
+
+  india-template-db:
+    container_name: india-template-db
+    image: mariadb:10.5
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_HOST: ${DB_MASTER_HOST}
+      MYSQL_PORT: ${DB_MASTER_PORT}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_DATA: /var/lib/mariadb/data
+    ports:
+      - ${DB_MASTER_PORT}
+    volumes:
+      - ./dbdata:/var/lib/mysql
+
+  india-template-db-app:
+    container_name: india-template-db-app
+    image: phpmyadmin
+    depends_on:
+      - india-template-db
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: ${DB_MASTER_HOST}
+      PMA_PORT: ${DB_MASTER_PORT}
+      PMA_USER: ${DB_USER}
+      PMA_PASSWORD: ${DB_PASS}
+      PMA_PMADB: ${DB_NAME}
+      VIRTUAL_HOST: india-template-db.dev-travel.com
+      VIRTUAL_PORT: 80
+    ports:
+      - 80
+
+networks:
+  default:
+    external: true
+    name: dev-travel.com
+
+volumes:
+  dbdata:
+
+# to create a network: docker network create dev-travel.com
+# to remove network: docker network rm dev-travel.com
+# run network: docker run -d --name dev-travel-network -p 80:80 -p 443:443 --restart always --net dev-travel.com -v /var/run/docker.sock:/tmp/docker.sock:ro registry.dyninno.net/docker/nginx-proxy:latest
+# run with build: docker-compose up --build -V

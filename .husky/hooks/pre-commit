@@ -1,0 +1,50 @@
+#!/bin/bash
+
+BASE_FOLDER="$(pwd)"
+source "$BASE_FOLDER"/.husky/hooks/color.sh
+
+if [ ! -f "$BASE_FOLDER"/.env ]; then
+    # shellcheck disable=SC2154
+    echo -e "\n${red}.env file not found${no_color}."
+    exit 1
+fi
+source "$BASE_FOLDER"/.env
+
+# shellcheck disable=SC2154
+echo -e "\n${yellow}checking test cases in pre-commit hook...${no_color}"
+
+
+# Check if the container is running
+if [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null)" != "true" ]; then
+    make test
+else
+    echo -e "${yellow}checking test cases inside the docker...${no_color}"
+    docker exec "${CONTAINER_NAME}" sh -c "make test"
+fi
+
+exit_code=$?
+if [ $exit_code -ne 0 ]; then
+    echo -e "\n${red}Test case failed! Commit aborted.${no_color}"
+    exit 1
+fi
+# shellcheck disable=SC2154
+echo -e "\n${green}Tests cases passed!${no_color}.\n"
+
+
+echo -e "\n${yellow}checking lint issue in pre-commit hook...${no_color}"
+
+if [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null)" != "true" ]; then
+    make lint
+else
+    echo -e "${yellow}checking linting inside the docker...${no_color}"
+    docker exec "${CONTAINER_NAME}" sh -c "make lint"
+fi
+
+exit_code=$?
+if [ $exit_code -ne 0 ]; then
+    echo -e "\n${red}Linting failed! Commit aborted.${no_color}"
+    exit 1
+fi
+
+echo -e "\n${green}Linting passed! Continuing with commit.${no_color}"
+exit 0

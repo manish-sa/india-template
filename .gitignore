@@ -1,0 +1,15 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+.idea/
+bin/
+local-data/
+**/.DS_Store
+tmp/
+.task/
+coverage
+dbdata/
+.env
+!.docker/**/.env

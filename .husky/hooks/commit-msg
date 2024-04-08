@@ -1,0 +1,32 @@
+#!/bin/bash
+
+BASE_FOLDER="$(pwd)"
+source "$BASE_FOLDER"/.husky/hooks/color.sh
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# shellcheck disable=SC2154
+echo -e "\n${yellow}checking commit message...${no_color}"
+
+# Array of patterns
+patterns=("^(FLAN-[0-9]+|\\(FLAN-[0-9]+\\)|\\[FLAN-[0-9]+\\]) (fix|feat|poc|chore|refactor|style|test): .*" "^Merge branch .*$")
+
+# Loop through the patterns
+valid_commit=false
+for pattern in "${patterns[@]}"; do
+    if [[ "$COMMIT_MSG" =~ $pattern ]]; then
+        valid_commit=true
+        break
+    fi
+done
+
+if ! $valid_commit; then
+    # shellcheck disable=SC2154
+    echo -e "\n${red}Your commit was rejected due to wrong commit message format!${no_color}."
+    echo -e "\n${red}Please use the following format 'FLAN-XXX/(FLAN-XXX)/[FLAN-XXX] (fix|feat|poc|chore|refactor|style|test): ****' syntax${no_color}.\n"
+    exit 1
+fi
+# shellcheck disable=SC2154
+echo -e "\n${green}commit message check passed!${no_color}.\n"
+exit 0

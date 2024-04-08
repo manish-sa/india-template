@@ -1,0 +1,22 @@
+#!/bin/bash
+
+BASE_FOLDER="$(pwd)"
+source "$BASE_FOLDER"/.husky/hooks/color.sh
+
+regx="^FLAN-[0-9]+-[a-z0-9-]+$"
+branch_name=$(git branch --show-current)
+
+# shellcheck disable=SC2154
+echo -e "\n${yellow}checking branch name in pre-push hook...${no_color}"
+
+if echo "$branch_name" | grep -Eq "$regx"; then
+  # shellcheck disable=SC2154
+  echo -e "\n${green}Branch name validation...successful!!${no_color}\n"
+else
+  # shellcheck disable=SC2154
+  echo -e "\n${red}Your commit was rejected due to wrong branch name pattern${no_color}."
+  echo -e "\n${red}Please rename your branch with 'FLAN-XXX-xxx-xxx-xxx' syntax${no_color}.\n"
+  exit 1
+fi
+
+exit 0
