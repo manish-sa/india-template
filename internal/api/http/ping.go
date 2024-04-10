@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/api/http/oapi"
+	"github.com/manish-sa/india-template/internal/api/http/oapi"
 )
 
 //nolint:revive

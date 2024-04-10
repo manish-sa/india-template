@@ -57,7 +57,7 @@ generate: oapi
 	go generate ./...
 
 export PROJECT_NAME ?= lbc
-PROJECT_PATH ?= gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service
+PROJECT_PATH ?= github.com/manish-sa/india-template
 LD_FLAGS ?= "-X $(PROJECT_PATH)/internal/info.serviceName=$(PROJECT_NAME)"
 build: generate
 	go build -trimpath -ldflags $(LD_FLAGS) -buildvcs=false -v -o $(LOCAL_BIN)/app ./cmd

@@ -1,54 +1,83 @@
 package provider
 
 import (
-    "context"
-    
-    "gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/client/gmail"
-    "gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/service/healthcheck"
-    
-    "gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/config"
-    "gorm.io/gorm"
+	"context"
+
+	"github.com/manish-sa/india-template/internal/client/gmail"
+	"github.com/manish-sa/india-template/internal/service/healthcheck"
+	"gitlab.dyninno.net/go-libraries/dyninnogorm"
+	"gorm.io/gorm"
+
+	"github.com/manish-sa/india-template/internal/config"
 )
 
 type Clients struct {
-    GmailClient gmail.GmailServiceInterface
+	GmailClient gmail.GmailServiceInterface
 }
 
 type Services struct {
-    HealthCheckService healthcheck.HealthcheckInterface
+	HealthCheckService healthcheck.HealthcheckInterface
 }
 
 type ServiceProvider struct {
-    *Clients
-    *Services
+	ctx context.Context
+	cfg config.Config
+	db  *gorm.DB
+	Clients
+	Services
 }
 
-func NewServiceProviders(ctx context.Context, cfg config.Config, db *gorm.DB) *ServiceProvider {
-    clients := Clients{
-        GmailClient: gmail.NewGmailClient(ctx),
-    }
-    
-    serviceProvider := &ServiceProvider{
-        Clients: &clients,
-    }
-    
-    serviceProvider.HealthCheckService = serviceProvider.InitHealthcheckServiceInstance(ctx, db)
-    
-    return serviceProvider
+func NewServiceProviders(ctx context.Context, cfg config.Config) *ServiceProvider {
+	sp := &ServiceProvider{
+		ctx: ctx,
+		cfg: cfg,
+	}
+
+	sp.db = sp.initDbClient()
+
+	clients := Clients{
+		GmailClient: sp.initGmailClient(),
+	}
+
+	services := Services{
+		HealthCheckService: sp.initHealthcheckServiceInstance(),
+	}
+
+	sp.Clients = clients
+	sp.Services = services
+
+	return sp
 }
 
-// InitHealthcheckServiceInstance Method to initialize the healthcheck service instance
-func (sp *ServiceProvider) InitHealthcheckServiceInstance(
-    ctx context.Context,
-    db *gorm.DB,
-) healthcheck.HealthcheckInterface {
-    if sp.HealthCheckService == nil {
-        sp.HealthCheckService = healthcheck.NewHealthcheckService(
-            ctx,
-            db,
-            sp.Clients.GmailClient,
-        )
-    }
-    
-    return sp.HealthCheckService
+func (sp *ServiceProvider) initHealthcheckServiceInstance() healthcheck.HealthcheckInterface {
+	if sp.HealthCheckService == nil {
+		sp.HealthCheckService = healthcheck.NewHealthcheckService(
+			sp.ctx,
+			sp.initDbClient(),
+			sp.initGmailClient(),
+		)
+	}
+
+	return sp.HealthCheckService
+}
+
+func (sp *ServiceProvider) initGmailClient() gmail.GmailServiceInterface {
+	if sp.GmailClient == nil {
+		sp.GmailClient = gmail.NewGmailClient(sp.ctx)
+	}
+
+	return sp.GmailClient
+}
+
+func (sp *ServiceProvider) initDbClient() *gorm.DB {
+	if sp.db == nil {
+		err := dyninnogorm.Init(nil)
+		if err != nil {
+			panic(err)
+		}
+
+		sp.db = dyninnogorm.Inst(sp.ctx)
+	}
+
+	return sp.db
 }

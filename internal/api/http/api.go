@@ -3,11 +3,11 @@ package http
 import (
 	"net/http"
 
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/app/provider"
+	"github.com/manish-sa/india-template/internal/app/provider"
 
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/api/http/oapi"
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/config"
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/info"
+	"github.com/manish-sa/india-template/internal/api/http/oapi"
+	"github.com/manish-sa/india-template/internal/config"
+	"github.com/manish-sa/india-template/internal/info"
 )
 
 var _ oapi.StrictServerInterface = (*API)(nil)

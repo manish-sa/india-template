@@ -8,10 +8,10 @@ import (
 	"gitlab.dyninno.net/go-libraries/log"
 	"gitlab.dyninno.net/go-libraries/shutdown"
 
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/app"
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/config"
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/info"
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/pkg/sentry"
+	"github.com/manish-sa/india-template/internal/app"
+	"github.com/manish-sa/india-template/internal/config"
+	"github.com/manish-sa/india-template/internal/info"
+	"github.com/manish-sa/india-template/pkg/sentry"
 )
 
 func apiCommand() *cobra.Command {

@@ -8,8 +8,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	oapimiddleware "github.com/oapi-codegen/nethttp-middleware"
 
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/api/http/oapi"
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/logger"
+	"github.com/manish-sa/india-template/internal/api/http/oapi"
+	"github.com/manish-sa/india-template/internal/logger"
 )
 
 func Validator(swagger *openapi3.T) func(next http.Handler) http.Handler {

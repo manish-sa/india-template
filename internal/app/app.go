@@ -4,22 +4,21 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/app/provider"
+	"github.com/manish-sa/india-template/internal/app/provider"
 
-	apiHttp "gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/api/http"
+	apiHttp "github.com/manish-sa/india-template/internal/api/http"
 
 	sentry "github.com/getsentry/sentry-go"
+	"github.com/manish-sa/india-template/internal/logger"
 	"github.com/pkg/errors"
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/logger"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
-	"gitlab.dyninno.net/go-libraries/dyninnogorm"
 	"gitlab.dyninno.net/go-libraries/shutdown"
 	"gitlab.dyninno.net/go-libraries/tracing"
 
-	"gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/internal/config"
-	sentryPkg "gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/pkg/sentry"
+	"github.com/manish-sa/india-template/internal/config"
+	sentryPkg "github.com/manish-sa/india-template/pkg/sentry"
 )
 
 type App struct {
@@ -61,11 +60,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 		return nil, errors.Wrap(err, "register tracing")
 	}
 
-	_ = dyninnogorm.Init(nil)
-
-	// @TODO will place some other place
-	db := dyninnogorm.Inst(ctx)
-	serviceProviders := provider.NewServiceProviders(ctx, cfg, db)
+	serviceProviders := provider.NewServiceProviders(ctx, cfg)
 	httpSrv := apiHttp.New(cfg, serviceProviders)
 
 	return instance(httpSrv, nil), nil

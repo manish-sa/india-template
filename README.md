@@ -11,14 +11,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service.git
+git remote add origin https://github.com/manish-sa/india-template.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab.dyninno.net/trevolution/ancillaries/lbp/lbc-service/-/settings/integrations)
+- [ ] [Set up project integrations](https://github.com/manish-sa/india-template/-/settings/integrations)
 
 ## Collaborate with your team
 
