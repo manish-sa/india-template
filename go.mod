@@ -3,13 +3,13 @@ module github.com/manish-sa/india-template
 go 1.21.5
 
 require (
-	github.com/getkin/kin-openapi v0.120.0
+	github.com/getkin/kin-openapi v0.122.0
 	github.com/getsentry/sentry-go v0.25.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/oapi-codegen/nethttp-middleware v1.0.1
-	github.com/oapi-codegen/runtime v1.0.0
+	github.com/oapi-codegen/runtime v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.17.0
 	github.com/spf13/cobra v1.8.0
@@ -19,7 +19,7 @@ require (
 	gitlab.dyninno.net/go-libraries/log v1.0.1
 	gitlab.dyninno.net/go-libraries/shutdown v1.0.2
 	gitlab.dyninno.net/go-libraries/tracing v1.0.5
-	golang.org/x/sync v0.3.0
+	golang.org/x/sync v0.4.0
 	google.golang.org/grpc v1.58.1
 	gorm.io/gorm v1.25.7
 )
@@ -68,9 +68,9 @@ require (
 	go.opentelemetry.io/otel/metric v1.19.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
-	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

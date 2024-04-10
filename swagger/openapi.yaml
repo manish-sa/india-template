@@ -12,6 +12,84 @@ paths:
   /ping:
     $ref: './route/ping/ping.yml'
 
+  /employees:
+#    get:
+#      summary: List all employees
+#      responses:
+#        '200':
+#          description: OK
+#          content:
+#            application/json:
+#              schema:
+#                type: array
+#                items:
+#                  $ref: '#/components/schemas/Employee'
+#    post:
+#      operationId: SaveEmployee
+#      summary: Create a new employee
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/Employee'
+#      responses:
+#        '201':
+#          description: Created
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/Employee'
+
+#  /employees/{id}:
+#      get:
+#        summary: Get an employee by ID
+#        parameters:
+#          - in: path
+#            name: id
+#            required: true
+#            schema:
+#              type: integer
+#        responses:
+#          '200':
+#            description: OK
+#            content:
+#              application/json:
+#                schema:
+#                  $ref: '#/components/schemas/Employee'
+#      put:
+#        summary: Update an employee by ID
+#        parameters:
+#          - in: path
+#            name: id
+#            required: true
+#            schema:
+#              type: integer
+#        requestBody:
+#          required: true
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/Employee'
+#        responses:
+#          '200':
+#            description: OK
+#            content:
+#              application/json:
+#                schema:
+#                  $ref: '#/components/schemas/Employee'
+#      delete:
+#        summary: Delete an employee by ID
+#        parameters:
+#          - in: path
+#            name: id
+#            required: true
+#            schema:
+#              type: integer
+#        responses:
+#          '204':
+#            description: No Content
+
 components:
   schemas:
     PongResponse:
@@ -29,3 +107,13 @@ components:
 
     ErrorResponse:
       $ref: './response/error.yml'
+
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+        - name

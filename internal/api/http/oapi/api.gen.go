@@ -13,6 +13,12 @@ import (
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
+// Employee defines model for Employee.
+type Employee struct {
+	Id   *int   `json:"id,omitempty"`
+	Name string `json:"name"`
+}
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	Data    []interface{} `json:"data"`
@@ -31,8 +37,14 @@ type PongResponse struct {
 	Status string    `json:"status"`
 }
 
+// SaveEmployeeJSONRequestBody defines body for SaveEmployee for application/json ContentType.
+type SaveEmployeeJSONRequestBody = Employee
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Create a new employee
+	// (POST /employees)
+	SaveEmployee(w http.ResponseWriter, r *http.Request)
 	// Ping
 	// (GET /ping)
 	GetPing(w http.ResponseWriter, r *http.Request)
@@ -41,6 +53,12 @@ type ServerInterface interface {
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
+
+// Create a new employee
+// (POST /employees)
+func (_ Unimplemented) SaveEmployee(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // Ping
 // (GET /ping)
@@ -56,6 +74,21 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// SaveEmployee operation middleware
+func (siw *ServerInterfaceWrapper) SaveEmployee(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveEmployee(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
 
 // GetPing operation middleware
 func (siw *ServerInterfaceWrapper) GetPing(w http.ResponseWriter, r *http.Request) {
@@ -186,10 +219,30 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/employees", wrapper.SaveEmployee)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/ping", wrapper.GetPing)
 	})
 
 	return r
+}
+
+type SaveEmployeeRequestObject struct {
+	Body *SaveEmployeeJSONRequestBody
+}
+
+type SaveEmployeeResponseObject interface {
+	VisitSaveEmployeeResponse(w http.ResponseWriter) error
+}
+
+type SaveEmployee201JSONResponse Employee
+
+func (response SaveEmployee201JSONResponse) VisitSaveEmployeeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type GetPingRequestObject struct {
@@ -219,6 +272,9 @@ func (response GetPing400JSONResponse) VisitGetPingResponse(w http.ResponseWrite
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// Create a new employee
+	// (POST /employees)
+	SaveEmployee(ctx context.Context, request SaveEmployeeRequestObject) (SaveEmployeeResponseObject, error)
 	// Ping
 	// (GET /ping)
 	GetPing(ctx context.Context, request GetPingRequestObject) (GetPingResponseObject, error)
@@ -251,6 +307,37 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// SaveEmployee operation middleware
+func (sh *strictHandler) SaveEmployee(w http.ResponseWriter, r *http.Request) {
+	var request SaveEmployeeRequestObject
+
+	var body SaveEmployeeJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveEmployee(ctx, request.(SaveEmployeeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveEmployee")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveEmployeeResponseObject); ok {
+		if err := validResponse.VisitSaveEmployeeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // GetPing operation middleware
