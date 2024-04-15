@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/manish-sa/india-template/internal/api/http/employee"
 	"github.com/manish-sa/india-template/internal/app/provider"
 
 	"github.com/pkg/errors"
@@ -20,8 +21,12 @@ const (
 	defaultWriteTimeout = 30 * time.Second
 )
 
-func New(cfg config.Config, serviceProviders *provider.ServiceProvider) *http.Server {
-	api := NewAPI(cfg, serviceProviders)
+func New(cfg config.Config, sp provider.SP) *http.Server {
+	api := NewAPI(
+		cfg,
+		sp,
+		employee.NewEmployee(sp.InitEmployeeServiceInstance()),
+	)
 
 	return NewHTTPServer(cfg.Ports.HTTP, api.NewRouter())
 }

@@ -13,6 +13,10 @@ import (
 	"github.com/manish-sa/india-template/internal/config"
 )
 
+type SP interface {
+	InitEmployeeServiceInstance() employeeservice.ServiceEmployee
+}
+
 type Clients struct {
 	GmailClient gmail.GmailServiceInterface
 }
@@ -35,7 +39,7 @@ type ServiceProvider struct {
 	Repository
 }
 
-func NewServiceProviders(ctx context.Context, cfg config.Config) *ServiceProvider {
+func NewServiceProviders(ctx context.Context, cfg config.Config) SP {
 	sp := &ServiceProvider{
 		ctx: ctx,
 		cfg: cfg,
@@ -49,7 +53,7 @@ func NewServiceProviders(ctx context.Context, cfg config.Config) *ServiceProvide
 
 	services := Services{
 		HealthCheckService: sp.initHealthcheckServiceInstance(),
-		EmployeeService:    sp.initEmployeeServiceInstance(),
+		EmployeeService:    sp.InitEmployeeServiceInstance(),
 	}
 
 	sp.Clients = clients
@@ -91,7 +95,7 @@ func (sp *ServiceProvider) initDbClient() *gorm.DB {
 	return sp.db
 }
 
-func (sp *ServiceProvider) initEmployeeServiceInstance() employeeservice.ServiceEmployee {
+func (sp *ServiceProvider) InitEmployeeServiceInstance() employeeservice.ServiceEmployee {
 	if sp.EmployeeService == nil {
 		sp.EmployeeService = employeeservice.NewEmployeeService(
 			sp.ctx,
